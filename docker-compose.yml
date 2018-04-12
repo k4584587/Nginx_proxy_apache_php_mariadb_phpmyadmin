@@ -1,0 +1,40 @@
+version: '2'
+
+services:
+  proxy:
+    image: nginx
+    ports:
+      - '80:80' # http 80 port
+      - '443:443' # https 443 port
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./config/ssl:/etc/ssl/certs:ro
+    links:
+      - php
+      - phpmyadmin
+
+  php:
+    build: .
+    volumes:
+      - ./config/apache2/conf/remoteip.conf:/etc/apache2/mods-enabled/remoteip.conf:ro
+      - /home/hosting/public_html:/var/www/html
+    links:
+      - mariadb
+
+  mariadb:
+    image: mariadb:10.1.31
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123 # maridadb root password
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - mariadb 
+    ports:
+      - 8080:80
+    environment:
+      PMA_ABSOLUTE_URI: your_domain:443/pma/
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
